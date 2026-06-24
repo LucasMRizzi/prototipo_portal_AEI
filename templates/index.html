@@ -298,11 +298,18 @@
     </div>
 
     <div id="resultado">
+
         <div class="resultado-header">
             <h2><i data-lucide="file-text" style="color: var(--accent);"></i> Relatório Final</h2>
             <button class="btn btn-secondary btn-pdf" onclick="exportarParaPDF()">
                 <i data-lucide="download" width="16" height="16"></i> Salvar PDF
             </button>
+        </div>
+        <div class="loading-alerts">
+            <div class="alert-item">
+                <i data-lucide="alert-triangle" width="14" height="14"></i>
+                <span>A IA pode cometer erros, considere verificar os resultados.</span>
+            </div>
         </div>
         <div id="conteudoRelatorio"></div>
     </div>
