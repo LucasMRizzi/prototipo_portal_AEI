@@ -1,6 +1,6 @@
 import os
 import re
-import json
+import asyncio
 from dotenv import load_dotenv
 from openai import OpenAI
 import numpy as np
@@ -285,74 +285,43 @@ def gerar_sugestoes_melhoria(dimensao, justificativa):
     sugestoes = sugestoes_base.get(dimensao, ["Revise esta seção cuidadosamente"])
     return "; ".join(sugestoes[:2])
 
-def analisar_artigo(caminho_pdf, contexto_adicional=""):
-    """Função principal para analisar um artigo académico em formato PDF."""
-    print("Iniciando análise do artigo académico...")
-
-    # 1. Extrai texto do PDF
-    print("Extraindo texto do PDF...")
+async def analisar_artigo_stream(caminho_pdf, manager, client_id):
+    await manager.enviar_progresso(client_id, "📖 Extraindo texto bruto das páginas do PDF...")
     texto_bruto = extrair_texto_pdf(caminho_pdf)
-    if not texto_bruto:
-        return "Erro: Não foi possível extrair texto do PDF."
-
-    # 2. Identifica as seções PRIMEIRO (com o texto ainda estruturado)
-    print("Identificando seções do artigo...")
+    
+    await manager.enviar_progresso(client_id, "🔍 Mapeando e identificando seções acadêmicas...")
     secoes = identificar_secoes(texto_bruto)
-
-    # 3. Agora sim, limpa e normaliza o texto para o pipeline de embeddings
-    print("Limpando e normalizando texto para embeddings...")
+    
     texto_limpo = limpar_texto(texto_bruto)
-
-    # 4. Divide em chunks para processamento
-    print("Dividindo texto em chunks para processamento...")
-    chunks = dividir_em_chunks(texto_limpo, tamanho_chunk=1200, sobreposicao=250)
-    if not chunks:
-        return "Erro: Não foi possível processar o texto extraído."
-
-    print("Gerando embeddings para os chunks via NVIDIA NIM...")
+    chunks = dividir_em_chunks(texto_limpo)
+    
+    await manager.enviar_progresso(client_id, f"🧱 Fragmentando texto...")
+    
     embeddings_chunks = []
     for i, chunk in enumerate(chunks):
-        if i % 10 == 0:
-            print(f"Processando chunk {i+1}/{len(chunks)}...")
-        embedding = obter_embedding(chunk)
-        embeddings_chunks.append(embedding)
+        embeddings_chunks.append(obter_embedding(chunk, tipo_input="passage"))
+
+    await manager.enviar_progresso(client_id, "🧠 Construindo Visão Geral do Artigo...")
+    visao_geral = obter_visao_geral_artigo(chunks)
 
     dimensoes = {
-        'Claridade da Hipótese/Problema': "Qual é a clareza e bem-definição da hipótese, problema de pesquisa ou objetivo apresentado no artigo?",
-        'Originalidade da Abordagem': "Quão original ou inovadora é a abordagem, metodologia ou proposta apresentada em relação ao estado da arte existente?",
-        'Rigor Metodológico': "Qual é o rigor, adequação e detalhe da metodologia empregada para abordar o problema de pesquisa?",
-        'Significância dos Resultados': "Quão significativos, relevantes e impactantes são os resultados apresentados em relação ao campo de estudo?",
-        'Qualidade da Escrita': "Qual é a qualidade geral da escrita, clareza, organização e apresentação do artigo?"
+        'Claridade da Hipótese/Problema': "Qual a clareza do problema de pesquisa?",
+        'Originalidade da Abordagem': "Quão inovadora é a metodologia/proposta?",
+        'Rigor Metodológico': "A metodologia é adequada e detalhada?",
+        'Significância dos Resultados': "Quão impactantes são os resultados?",
+        'Qualidade da Escrita': "A escrita é coesa e formal?"
     }
 
-    print("Mapeando visão geral do documento para contextualizar a IA...")
-    visao_geral = obter_visao_geral_artigo(chunks)
-    print(f"Sinopse gerada: {visao_geral}\n")
+    relatorio_markdown = f"# Relatório de Avaliação Crítica\n\n**Sinopse Global:** {visao_geral}\n\n"
 
-    print("Avaliando dimensões do artigo via Llama-3.3 no NIM...")
-    analises = {}
     for nome_dimensao, prompt_base in dimensoes.items():
-        print(f"Analisando criticamente: {nome_dimensao}...")
-        prompt_completo = prompt_base
-        if contexto_adicional:
-            prompt_completo += f" Considere também este contexto: {contexto_adicional}"
+        await manager.enviar_progresso(client_id, f"⚖️ Avaliando critério: {nome_dimensao}...")
+        chunks_relevantes = recuperar_chunks_relevantes(chunks, embeddings_chunks, prompt_base)
+        contexto_especifico = "\n\n".join(chunks_relevantes)
+        
+        prompt_critico = f"Avalie a dimensão '{nome_dimensao}' baseado nestes fragmentos, sabendo que a proposta global é: {visao_geral}. Forneça uma resposta dissertativa analítica direta, sem notas."
+        analise_texto = gerar_analise_com_nvidia_nim(contexto_especifico, prompt_critico)
+        
+        relatorio_markdown += f"### {nome_dimensao}\n{analise_texto}\n\n"
 
-        # Enviando a visão_geral para evitar falsas acusações por falta de contexto
-        analise = avaliar_dimensao(chunks, embeddings_chunks, nome_dimensao, prompt_completo, visao_geral=visao_geral)
-        analises[nome_dimensao] = analise
-
-    print("Gerando relatório final...")
-    metadados = {
-        'Arquivo Analisado': os.path.basename(caminho_pdf),
-        'Total de Chunks Processados': len(chunks),
-        'Seções Identificadas': ', '.join([k for k, v in secoes.items() if v])
-    }
-
-    relatorio = gerar_relatorio_markdown(analises, secoes, metadados)
-    return relatorio
-
-if __name__ == "__main__":
-    print("Agente de análise de artigos académicos configurado para NVIDIA NIM pronto para uso.")
-    # Exemplo de execução:
-    # resultado = analisar_artigo("seu_artigo.pdf", "Este artigo foca em deep learning.")
-    # print(resultado)
+    return relatorio_markdown

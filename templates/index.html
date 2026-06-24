@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Analisador de Artigos Acadêmicos NIM</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+        .upload-box { border: 2px dashed #ccc; padding: 30px; text-align: center; background: #fafafa; border-radius: 8px; }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; margin-top: 15px; }
+        .btn:disabled { background: #cccccc; }
+        #progresso { margin-top: 20px; padding: 15px; background: #e9ecef; border-left: 5px solid #007bff; display: none; border-radius: 4px; white-space: pre-line; }
+        #resultado { margin-top: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; display: none; background: #fff; }
+    </style>
+</head>
+<body>
+    <h1>Analisador IA de Artigos Acadêmicos</h1>
+    <p>Faça o upload do seu artigo em PDF para iniciar a análise contextual via NVIDIA NIM.</p>
+    
+    <div class="upload-box">
+        <input type="file" id="pdfFile" accept=".pdf"><br>
+        <button class="btn" id="btnEnviar" onclick="enviarFormulario()">Analisar Artigo</button>
+    </div>
+
+    <div id="progresso"><strong>Progresso do Processamento:</strong><br><span id="statusTexto">Iniciando...</span></div>
+    <div id="resultado"><h2>Relatório Final</h2><div id="conteudoRelatorio"></div></div>
+
+    <script>
+        function enviarFormulario() {
+            const fileInput = document.getElementById('pdfFile');
+            if (fileInput.files.length === 0) {
+                alert('Por favor, selecione um arquivo PDF.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Abre a conexão WebSocket para escutar o progresso em tempo real
+            // Cria um ID único temporário para associar o upload ao websocket
+            const clientId = Math.random().toString(36).substring(7);
+            const ws = new WebSocket(`ws://${window.location.host}/ws/${clientId}`);
+            
+            document.getElementById('btnEnviar').disabled = true;
+            document.getElementById('progresso').style.display = 'block';
+            document.getElementById('statusTexto').innerText = "Enviando arquivo...";
+            document.getElementById('resultado').style.display = 'none';
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.status === "progresso") {
+                    document.getElementById('statusTexto').innerText += "\n" + data.mensagem;
+                } else if (data.status === "concluido") {
+                    document.getElementById('progresso').style.display = 'none';
+                    document.getElementById('resultado').style.display = 'block';
+                    document.getElementById('conteudoRelatorio').innerHTML = data.relatorio;
+                    document.getElementById('btnEnviar').disabled = false;
+                    ws.close();
+                } else if (data.status === "erro") {
+                    alert("Erro no processamento: " + data.mensagem);
+                    document.getElementById('btnEnviar').disabled = false;
+                    ws.close();
+                }
+            };
+
+            ws.onopen = function() {
+                // Assim que o WebSocket abre, enviamos o arquivo via HTTP passando o ID do socket
+                fetch(`/upload/${clientId}`, {
+                    method: 'POST',
+                    body: formData
+                }).catch(err => {
+                    document.getElementById('statusTexto').innerText = "Erro ao enviar arquivo.";
+                    document.getElementById('btnEnviar').disabled = false;
+                });
+            };
+        }
+    </script>
+</body>
+</html>

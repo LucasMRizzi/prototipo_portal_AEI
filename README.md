@@ -93,12 +93,8 @@ O servidor iniciará localmente. Abra o seu navegador e acesse o endereço:
 
     Fase de Mapeamento: O texto bruto é extraído e passa pela função identificar_secoes para encontrar os limites lógicos do artigo.
 
-    Chunking de Segurança: O texto limpo é quebrado em blocos de no máximo 1600 caracteres (gerando cerca de 400 tokens), blindando o código contra o erro de limite de 512 tokens do modelo de embedding da NVIDIA.
+    Chunking de Segurança: O texto limpo é quebrado em blocos de no máximo 1200 caracteres (gerando cerca de 400 tokens), blindando o código contra o erro de limite de 512 tokens do modelo de embedding da NVIDIA.
 
     Visão Global: O Llama-3.3 lê os primeiros chunks para entender o objetivo macro do autor.
 
     Busca Semântica (RAG): Para cada critério de avaliação (Rigor Metodológico, Escrita, etc.), o sistema realiza uma busca por similaridade de cosseno e envia os 4 blocos mais relevantes para o LLM gerar a crítica contextualizada.
-
-
-### 💡 Dica extra:
-Se o seu repositório for privado ou público no GitHub, você pode adicionar uma seção de **Licença** ou **Autores** no final se achar necessário!
