@@ -312,7 +312,7 @@ async def analisar_artigo_stream(caminho_pdf, manager, client_id):
         'Qualidade da Escrita': "A escrita é coesa e formal?"
     }
 
-    relatorio_markdown = f"# Relatório de Avaliação Crítica\n\n**Sinopse Global:** {visao_geral}\n\n"
+    relatorio_markdown = f"# Relatório de Avaliação Crítica\n\n**Sinopse Global:** \n{visao_geral}\n\n"
 
     for nome_dimensao, prompt_base in dimensoes.items():
         await manager.enviar_progresso(client_id, f"⚖️ Avaliando critério: {nome_dimensao}...")

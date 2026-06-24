@@ -9,12 +9,15 @@ from fastapi.requests import Request
 from dotenv import load_dotenv
 
 # Importa a função de stream que criamos acima
-from research_analyzer import analisar_artigo_stream
+from src.research_analyzer import analisar_artigo_stream
 
 load_dotenv()
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+
+PASTA_DATA = "data"
+os.makedirs(PASTA_DATA, exist_ok=True)
 
 class ConnectionManager:
     def __init__(self):
@@ -50,7 +53,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
 @app.post("/upload/{client_id}")
 async def processar_artigo_api(client_id: str, file: UploadFile = File(...)):
-    caminho_temporario = f"temp_{client_id}.pdf"
+    caminho_temporario = os.path.join(PASTA_DATA, f"temp_{client_id}.pdf")
     try:
         with open(caminho_temporario, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
