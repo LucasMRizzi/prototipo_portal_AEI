@@ -1,6 +1,7 @@
 # 📑 Analisador IA de Artigos Acadêmicos (NVIDIA NIM + FastAPI)
 
 Este projeto é um protótipo de uma funcionalidade desenvolvida para o site do Portal do Ambiente de Empreendedorismo e Inovação da Unesp de Rio Claro, o projeto foi desenvolvido como parte de um PAEG realizado no primeiro semestre de 2026.
+
 O projeto consiste em uma aplicação web completa (API + Interface Gráfica) desenvolvida para realizar análises críticas e profundas de artigos acadêmicos em formato PDF. A inteligência do sistema utiliza os modelos de última geração da **NVIDIA NIM** (endpoints compatíveis com o SDK da OpenAI) para processar embeddings textuais de forma segura e gerar relatórios dissertativos sem vieses de fragmentação (RAG).
 
 A interface utiliza **WebSockets** para exibir o progresso do processamento em tempo real (etapa por etapa), garantindo transparência enquanto os vetores e as análises são gerados.
