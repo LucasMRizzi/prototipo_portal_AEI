@@ -47,8 +47,8 @@ Antes de começar, você precisará:
    git clone [https://github.com/seu-usuario/seu-repositorio.git](https://github.com/seu-usuario/seu-repositorio.git)
    cd seu-repositorio
 
-    Crie e ative o ambiente virtual (venv):
-    Bash
+2. Crie e ative o ambiente virtual (venv):
+    ```bash
 
     # No Linux/macOS:
     python3 -m venv venv
@@ -58,14 +58,14 @@ Antes de começar, você precisará:
     python -m venv venv
     venv\Scripts\activate
 
-    Instale as dependências necessárias:
-    Bash
+3. Instale as dependências necessárias:
+    ```bash
 
     pip install fastapi uvicorn python-multipart openai numpy pdfplumber python-dotenv
 
     Configure as Variáveis de Ambiente:
-    Crie um arquivo chamado .env na raiz do projeto e adicione a sua chave da NVIDIA:
-    Snippet de código
+4. Crie um arquivo chamado .env na raiz do projeto e adicione a sua chave da NVIDIA:
+    ```javascript
 
     NVIDIA_API_KEY=nvapi-sua-chave-aqui-xxxxxxxxxxxxxxxxxxxx
 
