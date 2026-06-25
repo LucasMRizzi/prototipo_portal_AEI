@@ -72,20 +72,21 @@ Antes de começar, você precisará:
 ## 🖥️ Estrutura do Projeto
 
 Garanta que a estrutura de pastas do seu projeto esteja organizada da seguinte forma:
-Plaintext
+   ```Plaintext
 
-portalAEI/
-├── data/                     # Pasta criada automaticamente para uploads temporários
-├── src/                      # Código-fonte isolado da aplicação
-│   └── research_analyzer.py  # Módulo com a lógica de IA, RAG e NVIDIA NIM
-├── templates/                # Arquivos de visualização (Frontend)
-│   └── index.html            # Interface web com WebSocket e botão para PDF
-├── venv/                     # Ambiente virtual do Python (dependências locais)
-├── .env                      # Variáveis de ambiente (NVIDIA_API_KEY)
-├── .gitignore                # Arquivo para o Git ignorar o venv e pycache
-├── main.py                   # Ponto de entrada e rotas do servidor FastAPI
-├── README.md                 # Documentação do projeto
-└── requirements.txt          # Lista de dependências do projeto
+   portalAEI/
+   ├── data/                     # Pasta criada automaticamente para uploads temporários
+   ├── src/                      # Código-fonte isolado da aplicação
+   │   └── research_analyzer.py  # Módulo com a lógica de IA, RAG e NVIDIA NIM
+   ├── templates/                # Arquivos de visualização (Frontend)
+   │   └── index.html            # Interface web com WebSocket e botão para PDF
+   ├── venv/                     # Ambiente virtual do Python (dependências locais)
+   ├── .env                      # Variáveis de ambiente (NVIDIA_API_KEY)
+   ├── .gitignore                # Arquivo para o Git ignorar o venv e pycache
+   ├── main.py                   # Ponto de entrada e rotas do servidor FastAPI
+   ├── README.md                 # Documentação do projeto
+   └── requirements.txt          # Lista de dependências do projeto
+```
 
 ## ⚡ Como Executar
 
