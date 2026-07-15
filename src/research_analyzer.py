@@ -213,19 +213,28 @@ def avaliar_dimensao(chunks, embeddings_chunks, nome_dimensao, prompt_avaliacao,
     if not contexto_especifico.strip():
         return "Contexto insuficiente para avaliação desta dimensão."
 
-    # Criamos um prompt equilibrado: une o rigor técnico à consciência contextual
-    prompt_critico = f"""Você é um avaliador acadêmico justo, técnico e analítico.
-Você deve avaliar a dimensão: "{nome_dimensao}" focando nos trechos fornecidos, mas sem ignorar o propósito geral do trabalho.
+    # PROMPT ATUALIZADO: Alinhado aos padrões FAPESP/CNPq com escala de 0 a 5
+    prompt_critico = f"""Você é um avaliador acadêmico sênior que emite pareceres rigorosos no padrão FAPESP/CNPq.
+Sua tarefa é avaliar a dimensão "{nome_dimensao}" baseando-se estritamente nos fragmentos fornecidos e no contexto geral do trabalho.
 
 [VISÃO GERAL DO ARTIGO - CONTEXTO MACRO]
 {visao_geral}
 
-[DIRETRIZES DE AVALIAÇÃO]
-- Analise criticamente os trechos específicos abaixo.
-- ATENÇÃO: Lembre-se de que você está lendo apenas FRAGMENTOS do texto. Não acuse o autor de omitir algo (como referências ou conclusões) a menos que o trecho analisado contradiga diretamente a boa prática da dimensão avaliada.
-- Seja construtivo e aponte falhas ou méritos reais baseados na proposta técnica descrita na Visão Geral.
+[CRITÉRIOS DE PONTUAÇÃO (0 a 5)]
+- **Nota 5 (Excelente):** Estado da arte. Apresentação impecável, originalidade indiscutível ou rigor metodológico perfeito e reprodutível.
+- **Nota 4 (Bom):** Sólido, acima da média e consistente. Contribuições evidentes com mínimas ressalvas.
+- **Nota 3 (Regular):** Adequado, mas incremental ou com limitações metodológicas/conceituais parciais.
+- **Nota 2 (Fraco):** Apresenta falhas metodológicas graves, fragilidade teórica ou falta de clareza crítica.
+- **Nota 1 (Muito Fraco):** Descrição ou fundamentação quase inexistente; inconsistências científicas explícitas.
+- **Nota 0 (Deficiente):** Totalmente ausente, omisso ou incorreto para a dimensão proposta.
 
-Sua resposta deve conter apenas o texto da análise descritiva, sem introduções ou notas."""
+[DIRETRIZES DE SAÍDA]
+Você DEVE estruturar sua resposta exatamente no seguinte formato:
+**Nota:** [Inserir nota de 0 a 5] / 5
+**Justificativa Métrica:** [1 frase curta explicando o porquê desta nota específica de acordo com a régua de pontuação acima]
+**Análise Crítica:** [Desenvolver a análise descritiva e dissertativa detalhada sobre o que foi observado nos trechos, apontando méritos e fragilidades reais com base técnica].
+
+Evite saudações, notas de rodapé ou preâmbulos. Vá direto à estrutura solicitada."""
 
     return gerar_analise_com_nvidia_nim(contexto_especifico, prompt_critico)
 
@@ -304,22 +313,42 @@ async def analisar_artigo_stream(caminho_pdf, manager, client_id):
     await manager.enviar_progresso(client_id, "🧠 Construindo Visão Geral do Artigo...")
     visao_geral = obter_visao_geral_artigo(chunks)
 
+    # Definição das dimensões acadêmicas rigorosas
     dimensoes = {
-        'Claridade da Hipótese/Problema': "Qual a clareza do problema de pesquisa?",
-        'Originalidade da Abordagem': "Quão inovadora é a metodologia/proposta?",
-        'Rigor Metodológico': "A metodologia é adequada e detalhada?",
-        'Significância dos Resultados': "Quão impactantes são os resultados?",
-        'Qualidade da Escrita': "A escrita é coesa e formal?"
+        'Claridade da Hipótese/Problema': "Qual a clareza do problema de pesquisa e das hipóteses formuladas?",
+        'Originalidade da Abordagem': "Quão inovadora é a proposta técnica frente ao estado da arte?",
+        'Rigor Metodológico': "A metodologia é descrita de forma robusta, clara, formal e reprodutível?",
+        'Significância dos Resultados': "Qual a relevância científica, impacto prático e qualidade da análise de dados nos resultados?",
+        'Qualidade da Escrita': "O texto possui coesão acadêmica, estrutura lógica correta e obedece à linguagem formal?"
     }
 
-    relatorio_markdown = f"# Relatório de Avaliação Crítica\n\n**Sinopse Global:** \n{visao_geral}\n\n"
+    relatorio_markdown = f"# Relatório de Avaliação Crítica (Padrão FAPESP/CNPq)\n\n**Sinopse Global:** \n{visao_geral}\n\n"
 
     for nome_dimensao, prompt_base in dimensoes.items():
         await manager.enviar_progresso(client_id, f"⚖️ Avaliando critério: {nome_dimensao}...")
         chunks_relevantes = recuperar_chunks_relevantes(chunks, embeddings_chunks, prompt_base)
         contexto_especifico = "\n\n".join(chunks_relevantes)
         
-        prompt_critico = f"Avalie a dimensão '{nome_dimensao}' baseado nestes fragmentos, sabendo que a proposta global é: {visao_geral}. Forneça uma resposta dissertativa analítica direta, sem notas."
+        # PROMPT ATUALIZADO: Alinhado com a régua 0-5 de avaliação acadêmica FAPESP/CNPq
+        prompt_critico = f"""Você é um avaliador do comitê científico do CNPq. 
+Avalie a dimensão '{nome_dimensao}' baseado estritamente nestes fragmentos, sabendo que a proposta global do estudo é: {visao_geral}.
+
+Sua avaliação deve enquadrar-se na seguinte escala de qualidade científica:
+- **5 (Excelente):** Excepcional, sem falhas identificadas nos fragmentos analisados.
+- **4 (Bom):** Muito consistente, contribuição clara, pequenos refinamentos necessários.
+- **3 (Regular):** Vago em alguns pontos ou de contribuição meramente incremental.
+- **2 (Fraco):** Lacunas teóricas/procedimentais graves.
+- **1 (Muito Fraco):** Abordagem quase inútil ou sem nexo científico claro nos fragmentos.
+- **0 (Deficiente):** Informação inexistente ou completamente incorreta.
+
+[REQUISITO DE RESPOSTA]
+Forneça a análise estritamente no formato estruturado:
+**Nota:** [Inserir nota de 0 a 5] / 5
+**Justificativa:** [Justificar sucintamente a nota escolhida]
+**Parecer:** [Análise dissertativa e técnica contendo críticas construtivas e pontos fortes].
+
+Não insira introduções ou notas de rodapé."""
+
         analise_texto = gerar_analise_com_nvidia_nim(contexto_especifico, prompt_critico)
         
         relatorio_markdown += f"### {nome_dimensao}\n{analise_texto}\n\n"
